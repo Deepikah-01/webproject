@@ -1,0 +1,226 @@
+{% extends 'layout.html' %}
+
+{% block title %}Assignments{% endblock %}
+
+{% block content %}
+<div class="planner-page animate-up">
+    <div class="planner-header">
+        <div class="welcome-msg">
+            <h1>Assignments</h1>
+            <p class="current-date"><i class="far fa-calendar-alt"></i> Manage your assignment workload and due dates</p>
+        </div>
+        <button class="btn-primary" style="width: auto; padding: 0.75rem 1.5rem;" onclick="openModal('add')">
+            <i class="fas fa-plus"></i> Add Assignment
+        </button>
+    </div>
+
+    <div class="task-grid" id="assignmentGrid">
+        {% for assignment in assignments %}
+        <div class="task-card glass {% if assignment.status == 'Completed' %}completed{% endif %}" data-id="{{ assignment.id }}">
+            <div class="task-card-header">
+                <div>
+                    <h3 class="task-title">{{ assignment.title }}</h3>
+                    <p class="task-desc">{{ assignment.description or 'No description provided.' }}</p>
+                </div>
+                <div class="task-actions">
+                    <button class="btn-icon complete-btn" title="Toggle Status" onclick="toggleAssignment({{ assignment.id }})">
+                        <i class="fas {% if assignment.status == 'Completed' %}fa-check-circle{% else %}fa-circle{% endif %}"></i>
+                    </button>
+                    <button class="btn-icon edit-btn" title="Edit Assignment" onclick="openEditModal({{ assignment.id }}, '{{ assignment.subject|replace("'", "\\'") }}', '{{ assignment.title|replace("'", "\\'") }}', '{{ assignment.description|replace("'", "\\'") }}', '{{ assignment.due_date.strftime('%Y-%m-%dT%H:%M') if assignment.due_date else '' }}', '{{ assignment.priority }}', '{{ assignment.status }}')">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn-icon delete-btn" title="Delete Assignment" onclick="deleteAssignment({{ assignment.id }})">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="task-meta">
+                <span class="badge badge-priority-{{ assignment.priority.lower() }}">{{ assignment.priority }}</span>
+                <span class="badge badge-category">{{ assignment.status }}</span>
+            </div>
+            <div class="task-date">
+                <i class="far fa-clock"></i>
+                <span>{{ assignment.due_date.strftime('%b %d, %Y at %H:%M') if assignment.due_date else 'No due date' }}</span>
+            </div>
+        </div>
+        {% else %}
+        <div class="glass" style="grid-column: 1/-1; padding: 3rem; text-align: center;">
+            <i class="fas fa-clipboard-list" style="font-size: 3rem; color: var(--text-muted); margin-bottom: 1rem;"></i>
+            <p style="color: var(--text-muted);">No assignments yet. Add a new assignment to get started.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<div id="addModal" class="modal">
+    <div class="modal-content glass">
+        <div class="modal-header">
+            <h3>Add Assignment</h3>
+            <span class="close-modal" onclick="closeModal('add')">&times;</span>
+        </div>
+        <form id="addAssignmentForm">
+            <div class="form-group">
+                <label>Subject</label>
+                <input type="text" name="subject" class="form-control" placeholder="e.g. Math" required>
+            </div>
+            <div class="form-group">
+                <label>Title</label>
+                <input type="text" name="title" class="form-control" placeholder="Assignment title" required>
+            </div>
+            <div class="form-group">
+                <label>Description</label>
+                <textarea name="description" class="form-control" placeholder="Details about the assignment"></textarea>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Due Date</label>
+                    <input type="datetime-local" name="due_date" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label>Priority</label>
+                    <select name="priority" class="form-control">
+                        <option value="Low">Low</option>
+                        <option value="Medium" selected>Medium</option>
+                        <option value="High">High</option>
+                    </select>
+                </div>
+            </div>
+            <button type="submit" class="btn-primary" style="margin-top: 1rem;">Create Assignment</button>
+        </form>
+    </div>
+</div>
+
+<div id="editModal" class="modal">
+    <div class="modal-content glass">
+        <div class="modal-header">
+            <h3>Edit Assignment</h3>
+            <span class="close-modal" onclick="closeModal('edit')">&times;</span>
+        </div>
+        <form id="editAssignmentForm">
+            <input type="hidden" id="editAssignmentId">
+            <div class="form-group">
+                <label>Subject</label>
+                <input type="text" id="editSubject" name="subject" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label>Title</label>
+                <input type="text" id="editTitle" name="title" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label>Description</label>
+                <textarea id="editDescription" name="description" class="form-control"></textarea>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Due Date</label>
+                    <input type="datetime-local" id="editDueDate" name="due_date" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label>Priority</label>
+                    <select id="editPriority" name="priority" class="form-control">
+                        <option value="Low">Low</option>
+                        <option value="Medium">Medium</option>
+                        <option value="High">High</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Status</label>
+                <select id="editStatus" name="status" class="form-control">
+                    <option value="Pending">Pending</option>
+                    <option value="Completed">Completed</option>
+                </select>
+            </div>
+            <button type="submit" class="btn-primary" style="margin-top: 1rem;">Update Assignment</button>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function openModal(type) {
+        document.getElementById(type + 'Modal').style.display = 'flex';
+    }
+
+    function closeModal(type) {
+        document.getElementById(type + 'Modal').style.display = 'none';
+    }
+
+    function openEditModal(id, subject, title, description, dueDate, priority, status) {
+        document.getElementById('editAssignmentId').value = id;
+        document.getElementById('editSubject').value = subject;
+        document.getElementById('editTitle').value = title;
+        document.getElementById('editDescription').value = description;
+        document.getElementById('editDueDate').value = dueDate;
+        document.getElementById('editPriority').value = priority;
+        document.getElementById('editStatus').value = status;
+        openModal('edit');
+    }
+
+    function deleteAssignment(id) {
+        if (confirm('Delete this assignment?')) {
+            fetch(`/assignments/delete/${id}`, { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    }
+                });
+        }
+    }
+
+    function toggleAssignment(id) {
+        fetch(`/assignments/toggle/${id}`, { method: 'POST' })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                }
+            });
+    }
+
+    document.getElementById('addAssignmentForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+
+        fetch('/assignments/add', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert(data.error || 'Unable to add assignment');
+            }
+        });
+    });
+
+    document.getElementById('editAssignmentForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const id = document.getElementById('editAssignmentId').value;
+        const formData = new FormData(this);
+
+        fetch(`/assignments/edit/${id}`, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert(data.error || 'Unable to update assignment');
+            }
+        });
+    });
+
+    window.onclick = function(event) {
+        if (event.target.classList.contains('modal')) {
+            event.target.style.display = 'none';
+        }
+    };
+</script>
+{% endblock %}

@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudyHub - {% block title %}{% endblock %}</title>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    {% block head %}{% endblock %}
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar glass">
+            <div class="brand">
+                <div class="brand-icon">
+                    <i class="fas fa-graduation-cap"></i>
+                </div>
+                <span class="brand-name">StudyHub</span>
+            </div>
+
+            <nav class="nav-menu">
+                <div class="nav-item">
+                    <a href="{{ url_for('dashboard') }}" class="nav-link {% if request.endpoint == 'dashboard' %}active{% endif %}">
+                        <i class="fas fa-th-large"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="{{ url_for('notes') }}" class="nav-link {% if request.endpoint == 'notes' %}active{% endif %}">
+                        <i class="fas fa-book-open"></i>
+                        <span>Notes</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="{{ url_for('planner') }}" class="nav-link {% if request.endpoint == 'planner' %}active{% endif %}">
+                        <i class="fas fa-calendar-check"></i>
+                        <span>Planner</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="{{ url_for('exams') }}" class="nav-link {% if request.endpoint == 'exams' %}active{% endif %}">
+                        <i class="fas fa-file-alt"></i>
+                        <span>Exams</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="{{ url_for('assignments') }}" class="nav-link {% if request.endpoint == 'assignments' %}active{% endif %}">
+                        <i class="fas fa-clipboard-list"></i>
+                        <span>Assignments</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="{{ url_for('timetable') }}" class="nav-link {% if request.endpoint == 'timetable' %}active{% endif %}">
+                        <i class="fas fa-table"></i>
+                        <span>Timetable</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="{{ url_for('attendance') }}" class="nav-link {% if request.endpoint == 'attendance' %}active{% endif %}">
+                        <i class="fas fa-user-check"></i>
+                        <span>Attendance</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="{{ url_for('cgpa') }}" class="nav-link {% if request.endpoint == 'cgpa' %}active{% endif %}">
+                        <i class="fas fa-calculator"></i>
+                        <span>CGPA Calc</span>
+                    </a>
+                </div>
+            </nav>
+
+            <div class="logout-container">
+                <a href="{{ url_for('logout') }}" class="nav-link">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Logout</span>
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+
+    <!-- JS -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

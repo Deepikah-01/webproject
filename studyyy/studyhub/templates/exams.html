@@ -1,0 +1,228 @@
+{% extends 'layout.html' %}
+
+{% block title %}Exams Schedule{% endblock %}
+
+{% block content %}
+<div class="planner-page animate-up">
+    <div class="planner-header">
+        <div class="welcome-msg">
+            <h1>Exams Schedule 📝</h1>
+            <p class="current-date"><i class="far fa-calendar-alt"></i> Keep track of your upcoming examinations and tests</p>
+        </div>
+        <button class="btn-primary" style="width: auto; padding: 0.75rem 1.5rem;" onclick="openModal('add')">
+            <i class="fas fa-plus"></i> Add New Exam
+        </button>
+    </div>
+
+    <!-- Upcoming Exams Section -->
+    <div class="section-title-wrapper" style="margin-bottom: 1.5rem; margin-top: 1rem;">
+        <h2 style="font-size: 1.5rem; font-weight: 600; background: linear-gradient(to right, #fff, #94a3b8); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Upcoming Exams</h2>
+    </div>
+    <div class="task-grid" id="upcomingGrid" style="margin-bottom: 3rem;">
+        {% for exam in upcoming_exams %}
+        <div class="task-card glass" data-id="{{ exam.id }}">
+            <div class="task-card-header">
+                <div>
+                    <h3 class="task-title">{{ exam.subject }}</h3>
+                </div>
+                <div class="task-actions">
+                    <button class="btn-icon edit-btn" title="Edit Exam" onclick="openEditModal({{ exam.id }}, '{{ exam.subject|replace("'", "\\'") }}', '{{ exam.date.strftime('%Y-%m-%dT%H:%M') }}')">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn-icon delete-btn" title="Delete Exam" onclick="deleteExam({{ exam.id }})">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="task-meta">
+                <span class="badge {{ exam.status_info.class }}">{{ exam.status_info.text }}</span>
+            </div>
+
+            <div class="task-date">
+                <i class="far fa-clock"></i>
+                <span>{{ exam.date.strftime('%b %d, %Y at %H:%M') }}</span>
+            </div>
+        </div>
+        {% else %}
+        <div class="glass" style="grid-column: 1/-1; padding: 3rem; text-align: center;">
+            <i class="fas fa-file-signature" style="font-size: 3rem; color: var(--text-muted); margin-bottom: 1rem;"></i>
+            <p style="color: var(--text-muted);">No upcoming exams! Good job staying ahead.</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Past Exams Section -->
+    {% if past_exams %}
+    <div class="section-title-wrapper" style="margin-bottom: 1.5rem;">
+        <h2 style="font-size: 1.5rem; font-weight: 600; background: linear-gradient(to right, #fff, #94a3b8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; opacity: 0.8;">Past Exams</h2>
+    </div>
+    <div class="task-grid" id="pastGrid" style="opacity: 0.8;">
+        {% for exam in past_exams %}
+        <div class="task-card glass completed" data-id="{{ exam.id }}">
+            <div class="task-card-header">
+                <div>
+                    <h3 class="task-title" style="text-decoration: none;">{{ exam.subject }}</h3>
+                </div>
+                <div class="task-actions">
+                    <button class="btn-icon edit-btn" title="Edit Exam" onclick="openEditModal({{ exam.id }}, '{{ exam.subject|replace("'", "\\'") }}', '{{ exam.date.strftime('%Y-%m-%dT%H:%M') }}')">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn-icon delete-btn" title="Delete Exam" onclick="deleteExam({{ exam.id }})">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="task-meta">
+                <span class="badge {{ exam.status_info.class }}">{{ exam.status_info.text }}</span>
+            </div>
+
+            <div class="task-date">
+                <i class="far fa-clock"></i>
+                <span>{{ exam.date.strftime('%b %d, %Y at %H:%M') }}</span>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+
+<!-- Add Exam Modal -->
+<div id="addModal" class="modal">
+    <div class="modal-content glass">
+        <div class="modal-header">
+            <h3>Add New Exam</h3>
+            <span class="close-modal" onclick="closeModal('add')">&times;</span>
+        </div>
+        <form id="addExamForm">
+            <div class="form-group">
+                <label>Subject</label>
+                <input type="text" name="subject" class="form-control" placeholder="e.g. Physics, Calculus" required>
+            </div>
+            <div class="form-group">
+                <label>Exam Date & Time</label>
+                <input type="datetime-local" name="date" class="form-control" required>
+            </div>
+            <button type="submit" class="btn-primary" style="margin-top: 1rem;">Create Exam</button>
+        </form>
+    </div>
+</div>
+
+<!-- Edit Exam Modal -->
+<div id="editModal" class="modal">
+    <div class="modal-content glass">
+        <div class="modal-header">
+            <h3>Edit Exam</h3>
+            <span class="close-modal" onclick="closeModal('edit')">&times;</span>
+        </div>
+        <form id="editExamForm">
+            <input type="hidden" id="editExamId">
+            <div class="form-group">
+                <label>Subject</label>
+                <input type="text" id="editSubject" name="subject" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label>Exam Date & Time</label>
+                <input type="datetime-local" id="editDate" name="date" class="form-control" required>
+            </div>
+            <button type="submit" class="btn-primary" style="margin-top: 1rem;">Update Exam</button>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Add Exam Form submission
+    document.getElementById('addExamForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        
+        fetch('/exams/add', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert(data.error || 'Something went wrong');
+            }
+        });
+    });
+
+    // Edit Exam Form submission
+    document.getElementById('editExamForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const examId = document.getElementById('editExamId').value;
+        const formData = new FormData(this);
+        
+        fetch(`/exams/edit/${examId}`, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert(data.error || 'Something went wrong');
+            }
+        });
+    });
+
+    function openModal(type) {
+        document.getElementById(type + 'Modal').style.display = 'flex';
+    }
+
+    function closeModal(type) {
+        document.getElementById(type + 'Modal').style.display = 'none';
+    }
+
+    function openEditModal(id, subject, dateStr) {
+        document.getElementById('editExamId').value = id;
+        document.getElementById('editSubject').value = subject;
+        document.getElementById('editDate').value = dateStr;
+        openModal('edit');
+    }
+
+    function deleteExam(id) {
+        if (confirm('Are you sure you want to delete this exam?')) {
+            fetch(`/exams/delete/${id}`, {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const card = document.querySelector(`.task-card[data-id="${id}"]`);
+                    if (card) {
+                        card.style.transform = 'scale(0.8)';
+                        card.style.opacity = '0';
+                        setTimeout(() => {
+                            card.remove();
+                            // If grids are empty now, reload to show empty state
+                            const upcomingGrid = document.getElementById('upcomingGrid');
+                            if (upcomingGrid && upcomingGrid.querySelectorAll('.task-card').length === 0) {
+                                location.reload();
+                            }
+                        }, 300);
+                    } else {
+                        location.reload();
+                    }
+                } else {
+                    alert(data.error || 'Something went wrong');
+                }
+            });
+        }
+    }
+
+    // Close modal when clicking outside
+    window.onclick = function(event) {
+        if (event.target.classList.contains('modal')) {
+            event.target.style.display = 'none';
+        }
+    }
+</script>
+{% endblock %}

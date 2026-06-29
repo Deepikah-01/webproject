@@ -1,0 +1,171 @@
+{% extends "layout.html" %}
+
+{% block title %}Study Planner{% endblock %}
+
+{% block content %}
+<div class="planner-page animate-up">
+    <div class="planner-header">
+        <div class="welcome-msg">
+            <h1>Study Planner</h1>
+            <p class="current-date"><i class="far fa-calendar-alt"></i> Organize your study schedule efficiently</p>
+        </div>
+        <button class="btn-primary" style="width: auto; padding: 0.75rem 1.5rem;" onclick="openModal('add')">
+            <i class="fas fa-plus"></i> Add New Task
+        </button>
+    </div>
+
+    <!-- Progress Tracker -->
+    <div class="progress-container glass">
+        <div class="progress-info">
+            <span>Overall Progress</span>
+            <span id="progress-percent">0%</span>
+        </div>
+        <div class="progress-track">
+            <div class="progress-fill" id="progress-fill"></div>
+        </div>
+    </div>
+
+    <!-- Controls & Filters -->
+    <div class="planner-controls">
+        <div class="search-wrapper">
+            <i class="fas fa-search"></i>
+            <input type="text" id="taskSearch" class="form-control" placeholder="Search tasks by title...">
+        </div>
+        <div class="category-filters">
+            <button class="filter-btn active" data-category="All">All</button>
+            <button class="filter-btn" data-category="Study">Study</button>
+            <button class="filter-btn" data-category="Assignment">Assignment</button>
+            <button class="filter-btn" data-category="Exam">Exam</button>
+            <button class="filter-btn" data-category="Personal">Personal</button>
+        </div>
+    </div>
+
+    <!-- Task Grid -->
+    <div class="task-grid" id="taskGrid">
+        {% for task in tasks %}
+        <div class="task-card glass {% if task.completed %}completed{% endif %}" data-id="{{ task.id }}" data-category="{{ task.category }}" data-title="{{ task.title }}">
+            <div class="task-card-header">
+                <div>
+                    <h3 class="task-title">{{ task.title }}</h3>
+                    <p class="task-desc">{{ task.description or '' }}</p>
+                </div>
+                <div class="task-actions">
+                    <button class="btn-icon complete-btn" title="Toggle Complete" onclick="toggleTask({{ task.id }})">
+                        <i class="fas {% if task.completed %}fa-check-circle{% else %}fa-circle{% endif %}"></i>
+                    </button>
+                    <button class="btn-icon edit-btn" title="Edit Task" onclick="openEditModal({{ task.id }}, '{{ task.title }}', '{{ task.description or '' }}', '{{ task.priority }}', '{{ task.category }}', '{{ task.date_due.strftime('%Y-%m-%dT%H:%M') if task.date_due else '' }}')">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn-icon delete-btn" title="Delete Task" onclick="deleteTask({{ task.id }})">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="task-meta">
+                <span class="badge badge-priority-{{ task.priority.lower() }}">{{ task.priority }}</span>
+                <span class="badge badge-category">{{ task.category }}</span>
+            </div>
+
+            <div class="task-date">
+                <i class="far fa-clock"></i>
+                <span>Due: {{ task.date_due.strftime('%b %d, %Y at %H:%M') if task.date_due else 'No due date' }}</span>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Add Task Modal -->
+<div id="addModal" class="modal">
+    <div class="modal-content glass">
+        <div class="modal-header">
+            <h3>Add New Task</h3>
+            <span class="close-modal" onclick="closeModal('add')">&times;</span>
+        </div>
+        <form id="addTaskForm">
+            <div class="form-group">
+                <label>Task Title</label>
+                <input type="text" name="title" class="form-control" placeholder="What needs to be done?" required>
+            </div>
+            <div class="form-group">
+                <label>Description (Optional)</label>
+                <textarea name="description" class="form-control" placeholder="Add more details..."></textarea>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Priority</label>
+                    <select name="priority" class="form-control">
+                        <option value="Low">Low</option>
+                        <option value="Medium" selected>Medium</option>
+                        <option value="High">High</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Category</label>
+                    <select name="category" class="form-control">
+                        <option value="Study">Study</option>
+                        <option value="Assignment">Assignment</option>
+                        <option value="Exam">Exam</option>
+                        <option value="Personal">Personal</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Due Date & Time</label>
+                <input type="datetime-local" name="date_due" class="form-control">
+            </div>
+            <button type="submit" class="btn-primary" style="margin-top: 1rem;">Create Task</button>
+        </form>
+    </div>
+</div>
+
+<!-- Edit Task Modal -->
+<div id="editModal" class="modal">
+    <div class="modal-content glass">
+        <div class="modal-header">
+            <h3>Edit Task</h3>
+            <span class="close-modal" onclick="closeModal('edit')">&times;</span>
+        </div>
+        <form id="editTaskForm">
+            <input type="hidden" id="editTaskId">
+            <div class="form-group">
+                <label>Task Title</label>
+                <input type="text" id="editTitle" name="title" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label>Description (Optional)</label>
+                <textarea id="editDescription" name="description" class="form-control"></textarea>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Priority</label>
+                    <select id="editPriority" name="priority" class="form-control">
+                        <option value="Low">Low</option>
+                        <option value="Medium">Medium</option>
+                        <option value="High">High</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Category</label>
+                    <select id="editCategory" name="category" class="form-control">
+                        <option value="Study">Study</option>
+                        <option value="Assignment">Assignment</option>
+                        <option value="Exam">Exam</option>
+                        <option value="Personal">Personal</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Due Date & Time</label>
+                <input type="datetime-local" id="editDateDue" name="date_due" class="form-control">
+            </div>
+            <button type="submit" class="btn-primary" style="margin-top: 1rem;">Update Task</button>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/planner.js') }}"></script>
+{% endblock %}

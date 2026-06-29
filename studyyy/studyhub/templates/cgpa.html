@@ -1,0 +1,119 @@
+{% extends 'layout.html' %}
+
+{% block title %}CGPA Calculator{% endblock %}
+
+{% block content %}
+<div class="dashboard-header animate-up">
+    <div class="welcome-msg">
+        <h1>CGPA Calculator</h1>
+        <p class="current-date">Track subjects, credits, grades, GPA, and overall CGPA.</p>
+    </div>
+</div>
+
+<div class="section-card glass animate-up">
+    <div class="section-header">
+        <h3>Add Subject</h3>
+    </div>
+    <form action="{{ url_for('add_cgpa_record') }}" method="post">
+        <div class="row g-3">
+            <div class="col-md-3 form-group">
+                <label>Semester</label>
+                <input type="text" name="semester" class="form-control" placeholder="e.g. Semester 1" required>
+            </div>
+            <div class="col-md-3 form-group">
+                <label>Subject</label>
+                <input type="text" name="subject" class="form-control" placeholder="Subject name" required>
+            </div>
+            <div class="col-md-2 form-group">
+                <label>Credits</label>
+                <input type="number" name="credits" class="form-control" min="1" value="3" required>
+            </div>
+            <div class="col-md-2 form-group">
+                <label>Grade</label>
+                <select name="grade" class="form-control" required>
+                    <option value="O">O</option>
+                    <option value="A+">A+</option>
+                    <option value="A">A</option>
+                    <option value="B+">B+</option>
+                    <option value="B">B</option>
+                    <option value="C">C</option>
+                    <option value="U">U</option>
+                </select>
+            </div>
+            <div class="col-md-2 form-group d-flex align-items-end">
+                <button type="submit" class="btn-primary" style="width:100%;">Add</button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<div class="section-card glass animate-up" style="margin-top: 1.5rem;">
+    <div class="section-header">
+        <h3>CGPA Overview</h3>
+        <form method="get" action="{{ url_for('cgpa') }}" style="display:flex; gap:0.5rem; flex-wrap: wrap;">
+            <input type="text" name="search" class="form-control" value="{{ search }}" placeholder="Search subject">
+            <select name="semester" class="form-control">
+                <option value="">All Semesters</option>
+                {% for sem in semesters %}
+                <option value="{{ sem }}" {% if semester_filter == sem %}selected{% endif %}>{{ sem }}</option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="btn-primary" style="width:auto; padding:0.6rem 1rem;">Filter</button>
+        </form>
+    </div>
+
+    <div class="stat-cards animate-up">
+        <div class="stat-card glass stat-1">
+            <div class="stat-icon"><i class="fas fa-calculator"></i></div>
+            <div class="stat-value">{{ overall_cgpa }}</div>
+            <div class="stat-label">Overall CGPA</div>
+        </div>
+        <div class="stat-card glass stat-2">
+            <div class="stat-icon"><i class="fas fa-layer-group"></i></div>
+            <div class="stat-value">{{ total_credits }}</div>
+            <div class="stat-label">Total Credits</div>
+        </div>
+    </div>
+
+    {% if records %}
+    <div class="item-list">
+        {% for record in records %}
+        <div class="list-item" style="justify-content: space-between; align-items: flex-start;">
+            <div>
+                <h4>{{ record.subject }}</h4>
+                <p>{{ record.semester }} • Credits: {{ record.credits }} • Grade: {{ record.grade }}</p>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:0.5rem; min-width: 140px;">
+                <span class="glass-pill" style="text-align:center; border:none; padding:0.4rem 0.6rem;">{{ record.grade_points }} GP</span>
+                <details style="background: rgba(255,255,255,0.04); border-radius: 12px; padding: 0.7rem;">
+                    <summary style="cursor: pointer; color: var(--primary);">Edit</summary>
+                    <form action="{{ url_for('edit_cgpa_record', record_id=record.id) }}" method="post" style="margin-top:0.7rem; display:grid; gap:0.5rem;">
+                        <input type="text" name="semester" class="form-control" value="{{ record.semester }}" required>
+                        <input type="text" name="subject" class="form-control" value="{{ record.subject }}" required>
+                        <input type="number" name="credits" class="form-control" min="1" value="{{ record.credits }}" required>
+                        <select name="grade" class="form-control" required>
+                            <option value="O" {% if record.grade == 'O' %}selected{% endif %}>O</option>
+                            <option value="A+" {% if record.grade == 'A+' %}selected{% endif %}>A+</option>
+                            <option value="A" {% if record.grade == 'A' %}selected{% endif %}>A</option>
+                            <option value="B+" {% if record.grade == 'B+' %}selected{% endif %}>B+</option>
+                            <option value="B" {% if record.grade == 'B' %}selected{% endif %}>B</option>
+                            <option value="C" {% if record.grade == 'C' %}selected{% endif %}>C</option>
+                            <option value="U" {% if record.grade == 'U' %}selected{% endif %}>U</option>
+                        </select>
+                        <button type="submit" class="btn-primary" style="padding:0.5rem;">Save</button>
+                    </form>
+                </details>
+                <form action="{{ url_for('delete_cgpa_record', record_id=record.id) }}" method="post">
+                    <button type="submit" class="glass-pill" style="width:100%; border:none; color:#f87171;">Delete</button>
+                </form>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="glass" style="padding: 2rem; text-align: center;">
+        <p>No CGPA records yet.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

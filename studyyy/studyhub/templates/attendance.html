@@ -1,0 +1,80 @@
+{% extends 'layout.html' %}
+
+{% block title %}Attendance{% endblock %}
+
+{% block content %}
+<div class="dashboard-header animate-up">
+    <div class="welcome-msg">
+        <h1>Attendance</h1>
+        <p class="current-date">Track every subject with live attendance percentages.</p>
+    </div>
+</div>
+
+<div class="section-card glass animate-up">
+    <div class="section-header">
+        <h3>Add Attendance</h3>
+    </div>
+    <form action="{{ url_for('add_attendance') }}" method="post">
+        <div class="row g-3">
+            <div class="col-md-4 form-group">
+                <label>Subject</label>
+                <input type="text" name="subject" class="form-control" placeholder="e.g. Mathematics" required>
+            </div>
+            <div class="col-md-3 form-group">
+                <label>Total Classes</label>
+                <input type="number" name="total_classes" class="form-control" min="0" value="0" required>
+            </div>
+            <div class="col-md-3 form-group">
+                <label>Attended Classes</label>
+                <input type="number" name="attended_classes" class="form-control" min="0" value="0" required>
+            </div>
+            <div class="col-md-2 form-group d-flex align-items-end">
+                <button type="submit" class="btn-primary" style="width:100%;">Add</button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<div class="section-card glass animate-up" style="margin-top: 1.5rem;">
+    <div class="section-header">
+        <h3>Attendance Records</h3>
+        <form method="get" action="{{ url_for('attendance') }}" style="display:flex; gap:0.5rem;">
+            <input type="text" name="search" class="form-control" value="{{ search }}" placeholder="Search subject">
+            <button type="submit" class="btn-primary" style="width:auto; padding:0.6rem 1rem;">Search</button>
+        </form>
+    </div>
+
+    {% if attendance_records %}
+    <div class="item-list">
+        {% for record in attendance_records %}
+        <div class="list-item" style="justify-content: space-between; align-items: flex-start;">
+            <div>
+                <h4>{{ record.subject }}</h4>
+                <p>{{ record.attended_classes }} / {{ record.total_classes }} classes attended</p>
+                <p style="margin-top:0.3rem; color: var(--text-muted);">Attendance: {{ record.attendance_percentage }}%</p>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:0.5rem; min-width: 140px;">
+                <span class="glass-pill" style="text-align:center; color: {% if record.attendance_percentage >= 75 %}#4ade80{% else %}#f87171{% endif %}; border:none; padding:0.4rem 0.6rem;">{{ record.status }}</span>
+                <details style="background: rgba(255,255,255,0.04); border-radius: 12px; padding: 0.7rem;">
+                    <summary style="cursor: pointer; color: var(--primary);">Edit</summary>
+                    <form action="{{ url_for('edit_attendance', attendance_id=record.id) }}" method="post" style="margin-top:0.7rem; display:grid; gap:0.5rem;">
+                        <input type="text" name="subject" class="form-control" value="{{ record.subject }}" required>
+                        <input type="number" name="total_classes" class="form-control" min="0" value="{{ record.total_classes }}" required>
+                        <input type="number" name="attended_classes" class="form-control" min="0" value="{{ record.attended_classes }}" required>
+                        <button type="submit" class="btn-primary" style="padding:0.5rem;">Save</button>
+                    </form>
+                </details>
+                <form action="{{ url_for('delete_attendance', attendance_id=record.id) }}" method="post">
+                    <button type="submit" class="glass-pill" style="width:100%; border:none; color:#f87171;">Delete</button>
+                </form>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="glass" style="padding: 2rem; text-align: center;">
+        <p>No attendance records yet.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,129 @@
+{% extends 'layout.html' %}
+
+{% block title %}Assignments{% endblock %}
+
+{% block content %}
+<div class="dashboard-header animate-up">
+    <div class="welcome-msg">
+        <h1>Assignments</h1>
+        <p class="current-date">Track deadlines, priority, and progress in one place.</p>
+    </div>
+</div>
+
+<div class="section-card glass animate-up">
+    <div class="section-header">
+        <h3>Add New Assignment</h3>
+    </div>
+    <form action="{{ url_for('add_assignment') }}" method="post">
+        <div class="form-group">
+            <label>Title</label>
+            <input type="text" name="title" class="form-control" placeholder="Enter assignment title" required>
+        </div>
+        <div class="form-group">
+            <label>Subject</label>
+            <input type="text" name="subject" class="form-control" placeholder="Enter subject" required>
+        </div>
+        <div class="form-row" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem;">
+            <div class="form-group">
+                <label>Due Date</label>
+                <input type="date" name="due_date" class="form-control">
+            </div>
+            <div class="form-group">
+                <label>Priority</label>
+                <select name="priority" class="form-control">
+                    <option value="Low">Low</option>
+                    <option value="Medium" selected>Medium</option>
+                    <option value="High">High</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Status</label>
+                <select name="status" class="form-control">
+                    <option value="Pending" selected>Pending</option>
+                    <option value="In Progress">In Progress</option>
+                    <option value="Completed">Completed</option>
+                </select>
+            </div>
+        </div>
+        <div class="form-group">
+            <label>Description</label>
+            <textarea name="description" class="form-control" rows="4" placeholder="Add details or instructions"></textarea>
+        </div>
+        <button type="submit" class="btn-primary">Save Assignment</button>
+    </form>
+</div>
+
+<div class="section-card glass animate-up" style="margin-top: 1.5rem;">
+    <div class="section-header">
+        <h3>My Assignments</h3>
+    </div>
+
+    {% if assignments %}
+    <div class="item-list">
+        {% for assignment in assignments %}
+        <div class="list-item">
+            <div style="flex: 1;">
+                <h4>{{ assignment.title }}</h4>
+                <p>{{ assignment.subject }} • {{ assignment.priority }} • {{ assignment.status }}</p>
+                <p style="color: var(--text-muted); margin-top: 0.5rem;">
+                    Due: {{ assignment.due_date.strftime('%Y-%m-%d') if assignment.due_date else 'No date set' }}
+                </p>
+                {% if assignment.description %}
+                <p style="color: var(--text-muted); margin-top: 0.5rem;">{{ assignment.description }}</p>
+                {% endif %}
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 0.75rem; min-width: 120px;">
+                <form action="{{ url_for('delete_assignment', assignment_id=assignment.id) }}" method="post">
+                    <button type="submit" class="glass-pill" style="width: 100%; color: #f87171; border: none;">Delete</button>
+                </form>
+                <details style="background: rgba(255,255,255,0.04); border-radius: 12px; padding: 0.8rem;">
+                    <summary class="btn-view-all" style="cursor: pointer;">Edit</summary>
+                    <form action="{{ url_for('edit_assignment', assignment_id=assignment.id) }}" method="post" style="margin-top: 1rem; display: grid; gap: 1rem;">
+                        <div class="form-group">
+                            <label>Title</label>
+                            <input type="text" name="title" class="form-control" value="{{ assignment.title }}" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Subject</label>
+                            <input type="text" name="subject" class="form-control" value="{{ assignment.subject }}" required>
+                        </div>
+                        <div class="form-row" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem;">
+                            <div class="form-group">
+                                <label>Due Date</label>
+                                <input type="date" name="due_date" class="form-control" value="{{ assignment.due_date.strftime('%Y-%m-%d') if assignment.due_date else '' }}">
+                            </div>
+                            <div class="form-group">
+                                <label>Priority</label>
+                                <select name="priority" class="form-control">
+                                    <option value="Low" {% if assignment.priority == 'Low' %}selected{% endif %}>Low</option>
+                                    <option value="Medium" {% if assignment.priority == 'Medium' %}selected{% endif %}>Medium</option>
+                                    <option value="High" {% if assignment.priority == 'High' %}selected{% endif %}>High</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Status</label>
+                                <select name="status" class="form-control">
+                                    <option value="Pending" {% if assignment.status == 'Pending' %}selected{% endif %}>Pending</option>
+                                    <option value="In Progress" {% if assignment.status == 'In Progress' %}selected{% endif %}>In Progress</option>
+                                    <option value="Completed" {% if assignment.status == 'Completed' %}selected{% endif %}>Completed</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Description</label>
+                            <textarea name="description" class="form-control" rows="3">{{ assignment.description }}</textarea>
+                        </div>
+                        <button type="submit" class="btn-primary">Update Assignment</button>
+                    </form>
+                </details>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="glass" style="padding: 2rem; text-align: center;">
+        <p>No assignments found yet. Add one to get started.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
